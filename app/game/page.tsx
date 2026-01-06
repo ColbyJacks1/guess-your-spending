@@ -57,6 +57,14 @@ export default function GamePage() {
     }
   }, [router]);
 
+  // Auto-start game when continuing from results page
+  useEffect(() => {
+    if (completedNames.length > 0 && dateRange && stage === 'mode-selection') {
+      // We have continue data and date range is ready, auto-start the game
+      handleStartGame(true);
+    }
+  }, [completedNames, dateRange, stage]);
+
   const handleModeSelect = (selectedMode: 'retailer' | 'category') => {
     setMode(selectedMode);
   };

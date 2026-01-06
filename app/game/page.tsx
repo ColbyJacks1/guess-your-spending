@@ -10,9 +10,10 @@ import { Button } from '@/components/ui/button';
 import { YNABTransaction, SpendingCategory, GameResult } from '@/lib/types';
 import { aggregateTransactions } from '@/lib/aggregator';
 import { DateRange, DateRangePreset, filterTransactionsByDate } from '@/lib/utils';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Trophy, Play } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-type GameStage = 'mode-selection' | 'guessing' | 'revealing';
+type GameStage = 'mode-selection' | 'guessing' | 'revealing' | 'round-complete';
 
 export default function GamePage() {
   const router = useRouter();
@@ -22,10 +23,12 @@ export default function GamePage() {
   const [categories, setCategories] = useState<SpendingCategory[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [results, setResults] = useState<GameResult[]>([]);
+  const [completedNames, setCompletedNames] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<DateRange | null>(null);
   const [dateRangePreset, setDateRangePreset] = useState<DateRangePreset>('last-12-months');
   const [filteredTransactionCount, setFilteredTransactionCount] = useState(0);
   const [totalSpent, setTotalSpent] = useState(0);
+  const [hasMoreCategories, setHasMoreCategories] = useState(true);
 
   // Load transactions from sessionStorage
   useEffect(() => {
@@ -38,6 +41,16 @@ export default function GamePage() {
     try {
       const parsed = JSON.parse(stored);
       setTransactions(parsed);
+      
+      // Check if we're continuing a game from results page
+      const continueGame = sessionStorage.getItem('continue-game');
+      if (continueGame) {
+        const continueData = JSON.parse(continueGame);
+        setMode(continueData.mode);
+        setCompletedNames(continueData.completedNames || []);
+        setResults(continueData.results || []);
+        sessionStorage.removeItem('continue-game');
+      }
     } catch (error) {
       console.error('Failed to parse transactions:', error);
       router.push('/');
@@ -73,20 +86,36 @@ export default function GamePage() {
     }
   }, [transactions, dateRange]);
 
-  const handleStartGame = () => {
+  const handleStartGame = (continueGame: boolean = false) => {
+    const excludeNames = continueGame ? completedNames : [];
+    
     const aggregated = aggregateTransactions(transactions, {
       mode,
       topN: 10,
       minAmount: 50, // Only include categories with at least $50
       dateRange,
+      excludeNames,
     });
 
     if (aggregated.length === 0) {
-      // Could show an error here, but for now just prevent starting
+      setHasMoreCategories(false);
       return;
     }
 
-    setCategories(aggregated);
+    // Check if there would be more after this batch
+    const nextBatchCheck = aggregateTransactions(transactions, {
+      mode,
+      topN: 1,
+      minAmount: 50,
+      dateRange,
+      excludeNames: [...excludeNames, ...aggregated.map(c => c.name)],
+    });
+    setHasMoreCategories(nextBatchCheck.length > 0);
+
+    // Shuffle categories so they appear in random order
+    const shuffled = [...aggregated].sort(() => Math.random() - 0.5);
+    setCategories(shuffled);
+    setCurrentIndex(0);
     setStage('guessing');
   };
 
@@ -110,14 +139,38 @@ export default function GamePage() {
       setCurrentIndex(currentIndex + 1);
       setStage('guessing');
     } else {
-      // Store results and go to results page
-      sessionStorage.setItem('game-results', JSON.stringify({
+      // Add current batch to completed names
+      const newCompletedNames = [...completedNames, ...categories.map(c => c.name)];
+      setCompletedNames(newCompletedNames);
+      
+      // Check if there are more categories available
+      const nextBatch = aggregateTransactions(transactions, {
         mode,
-        results,
-        categories,
-      }));
-      router.push('/results');
+        topN: 1,
+        minAmount: 50,
+        dateRange,
+        excludeNames: newCompletedNames,
+      });
+      setHasMoreCategories(nextBatch.length > 0);
+      
+      // Go to round complete screen
+      setStage('round-complete');
     }
+  };
+
+  const handleSeeResults = () => {
+    // Store results and completed names
+    sessionStorage.setItem('game-results', JSON.stringify({
+      mode,
+      results,
+      categories,
+      completedNames,
+    }));
+    router.push('/results');
+  };
+
+  const handleContinuePlaying = () => {
+    handleStartGame(true);
   };
 
   const handleBack = () => {
@@ -161,11 +214,11 @@ export default function GamePage() {
                 totalSpent={totalSpent}
               />
               
-              <div className="text-center">
+              <div className="text-center pt-4">
                 <Button 
-                  onClick={handleStartGame} 
+                  onClick={() => handleStartGame(false)} 
                   size="lg" 
-                  className="px-12"
+                  className="px-16 py-6 text-xl font-bold shadow-lg hover:shadow-xl transition-shadow"
                   disabled={filteredTransactionCount === 0}
                 >
                   Start Game
@@ -194,6 +247,59 @@ export default function GamePage() {
               onNext={handleNext}
               isLast={currentIndex === categories.length - 1}
             />
+          )}
+
+          {stage === 'round-complete' && (
+            <Card className="border-none shadow-lg">
+              <CardHeader className="text-center pb-2">
+                <CardTitle className="text-2xl">Round Complete!</CardTitle>
+                <p className="text-lg text-muted-foreground mt-2">
+                  {results.length >= 30 ? "You're unstoppable! 🔥" : 
+                   results.length >= 20 ? "On a roll! 🎲" :
+                   results.length >= 10 ? "Getting warmer! 🌡️" :
+                   "Great start! 🚀"}
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="text-center">
+                  <p className="text-5xl font-bold text-primary mb-2">
+                    {results.length}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {mode === 'retailer' ? 'retailers' : 'categories'} guessed
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-4 max-w-md mx-auto">
+                  <Button
+                    onClick={handleSeeResults}
+                    size="lg"
+                    className="w-full py-6 text-lg"
+                  >
+                    <Trophy className="w-5 h-5 mr-2" />
+                    See My Results
+                  </Button>
+
+                  {hasMoreCategories && (
+                    <Button
+                      onClick={handleContinuePlaying}
+                      variant="outline"
+                      size="lg"
+                      className="w-full py-6 text-lg"
+                    >
+                      <Play className="w-5 h-5 mr-2" />
+                      Keep Going (+10 more)
+                    </Button>
+                  )}
+                </div>
+
+                {!hasMoreCategories && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    You&apos;ve guessed all available {mode === 'retailer' ? 'retailers' : 'categories'}!
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>

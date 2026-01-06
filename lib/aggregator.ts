@@ -6,6 +6,7 @@ export interface AggregationOptions {
   topN?: number; // How many top categories to return
   minAmount?: number; // Minimum amount to include
   dateRange?: DateRange | null; // Optional date range filter
+  excludeNames?: string[]; // Categories/retailers to exclude (already guessed)
 }
 
 /**
@@ -15,7 +16,7 @@ export function aggregateTransactions(
   transactions: YNABTransaction[],
   options: AggregationOptions
 ): SpendingCategory[] {
-  const { mode, topN = 10, minAmount = 0, dateRange } = options;
+  const { mode, topN = 10, minAmount = 0, dateRange, excludeNames = [] } = options;
 
   // Filter transactions by date range if provided
   const filteredTransactions = dateRange 
@@ -30,6 +31,11 @@ export function aggregateTransactions(
 
     // Skip empty categories (for category mode)
     if (!key || key.trim() === '') {
+      return;
+    }
+
+    // Skip excluded names (already guessed)
+    if (excludeNames.includes(key)) {
       return;
     }
 

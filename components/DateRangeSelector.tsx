@@ -49,7 +49,10 @@ export function DateRangeSelector({
   const [customToYear, setCustomToYear] = useState<number | null>(null);
   const [customToMonth, setCustomToMonth] = useState<number>(11);
 
-  // Initialize available years and default range
+  // Track if we've initialized to prevent re-triggering
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  // Initialize available years and default range (only once)
   useEffect(() => {
     const years = getAvailableYears(transactions);
     setAvailableYears(years);
@@ -60,10 +63,13 @@ export function DateRangeSelector({
       setCustomToYear(years[0]);
     }
     
-    // Set default to last 12 months
-    const defaultRange = getDateRangeFromPreset('last-12-months');
-    onDateRangeChange(defaultRange, 'last-12-months');
-  }, [transactions, onDateRangeChange]);
+    // Set default to last 12 months ONLY on first mount
+    if (!hasInitialized && transactions.length > 0) {
+      const defaultRange = getDateRangeFromPreset('last-12-months');
+      onDateRangeChange(defaultRange, 'last-12-months');
+      setHasInitialized(true);
+    }
+  }, [transactions, onDateRangeChange, hasInitialized]);
 
   const handleYearSelect = (year: number) => {
     setSelectedYear(year);
@@ -97,22 +103,22 @@ export function DateRangeSelector({
     }
   };
 
-  // Always show current year as hero, with -1 and +1 as adjacent
+  // Show last complete year as hero, with adjacent years on either side
   const currentYear = new Date().getFullYear();
-  const heroYear = currentYear;
-  const prevYear = currentYear - 1;
-  const nextYear = currentYear + 1;
+  const heroYear = currentYear - 1;
+  const prevYear = heroYear - 1;
+  const nextYear = heroYear + 1;
 
   return (
-    <Card className="border-none shadow-none bg-transparent">
-      <CardContent className="p-0 space-y-6">
+    <Card className="border border-border/50 shadow-sm bg-muted/20 rounded-2xl">
+      <CardContent className="p-6 space-y-5">
         {/* Year Selection Row */}
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-center gap-2">
           {/* Previous Year */}
           <button
             onClick={() => handleYearSelect(prevYear)}
             className={cn(
-              'w-16 h-16 rounded-full text-sm font-medium transition-all flex items-center justify-center',
+              'w-12 h-12 rounded-full text-xs font-medium transition-all flex items-center justify-center',
               selectedYear === prevYear
                 ? 'bg-foreground text-background'
                 : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -125,7 +131,7 @@ export function DateRangeSelector({
           <button
             onClick={() => handleYearSelect(heroYear)}
             className={cn(
-              'px-12 py-5 rounded-3xl text-3xl font-bold transition-all shadow-lg',
+              'px-8 py-3 rounded-2xl text-xl font-bold transition-all shadow-md',
               selectedYear === heroYear
                 ? 'bg-foreground text-background scale-100'
                 : 'bg-muted/70 text-muted-foreground hover:bg-muted scale-95 opacity-70 hover:opacity-100'
@@ -138,7 +144,7 @@ export function DateRangeSelector({
           <button
             onClick={() => handleYearSelect(nextYear)}
             className={cn(
-              'w-16 h-16 rounded-full text-sm font-medium transition-all flex items-center justify-center',
+              'w-12 h-12 rounded-full text-xs font-medium transition-all flex items-center justify-center',
               selectedYear === nextYear
                 ? 'bg-foreground text-background'
                 : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -151,14 +157,14 @@ export function DateRangeSelector({
           <button
             onClick={() => setShowCustomPicker(!showCustomPicker)}
             className={cn(
-              'w-16 h-16 rounded-full text-sm font-medium transition-all flex items-center justify-center',
+              'w-12 h-12 rounded-full text-xs font-medium transition-all flex items-center justify-center',
               showCustomPicker
                 ? 'bg-foreground text-background'
                 : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
             )}
             title="Custom date range"
           >
-            <Calendar className="w-5 h-5" />
+            <Calendar className="w-4 h-4" />
           </button>
         </div>
 
@@ -254,15 +260,15 @@ export function DateRangeSelector({
         </div>
 
         {/* Stats Display */}
-        <div className="flex items-center justify-center gap-8 pt-4">
+        <div className="flex items-center justify-center gap-6 pt-2">
           <div className="text-center">
-            <p className="text-4xl font-bold">{transactionCount.toLocaleString()}</p>
-            <p className="text-sm text-muted-foreground mt-1">transactions</p>
+            <p className="text-2xl font-bold">{transactionCount.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">transactions</p>
           </div>
-          <div className="h-12 w-px bg-border" />
+          <div className="h-10 w-px bg-border" />
           <div className="text-center">
-            <p className="text-4xl font-bold">{formatCurrency(totalSpent)}</p>
-            <p className="text-sm text-muted-foreground mt-1">total spent</p>
+            <p className="text-2xl font-bold">{formatCurrency(totalSpent)}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">total spent</p>
           </div>
         </div>
 

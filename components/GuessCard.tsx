@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -13,6 +13,16 @@ interface GuessCardProps {
   onGuess: (amount: number) => void;
 }
 
+const TIPS = [
+  '💡 Think bigger picture!',
+  '🤔 Trust your gut!',
+  '📊 Your instinct knows!',
+  '🎯 Take your best shot!',
+  '💭 What does your memory say?',
+  '🔍 Consider the time period!',
+  '💰 Every guess gets you closer!',
+];
+
 export function GuessCard({
   categoryName,
   currentIndex,
@@ -21,6 +31,9 @@ export function GuessCard({
 }: GuessCardProps) {
   const [guess, setGuess] = useState('');
   const [error, setError] = useState('');
+  
+  // Pick a random tip for this card (consistent per card)
+  const tip = useMemo(() => TIPS[currentIndex % TIPS.length], [currentIndex]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,7 +100,7 @@ export function GuessCard({
           </Button>
         </form>
         <p className="text-xs text-center text-muted-foreground mt-4">
-          💡 Tip: Think about all your purchases from this category
+          {tip}
         </p>
       </CardContent>
     </Card>

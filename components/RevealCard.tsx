@@ -32,6 +32,17 @@ export function RevealCard({
   const difference = actual - guess;
   const percentOff = calculatePercentageDifference(guess, actual);
   const accuracy = getAccuracyRating(percentOff);
+  
+  // Get reaction based on accuracy
+  const getReaction = () => {
+    if (percentOff < 5) return { emoji: '🎯', message: 'Nailed it!' };
+    if (percentOff < 15) return { emoji: '👏', message: 'So close!' };
+    if (percentOff < 30) return { emoji: '😊', message: 'Pretty good!' };
+    if (percentOff < 50) return { emoji: '😮', message: 'Whoa, plot twist!' };
+    return { emoji: '🤯', message: 'Big surprise!' };
+  };
+  
+  const reaction = getReaction();
 
   return (
     <Card className={cn(
@@ -63,14 +74,20 @@ export function RevealCard({
 
         {/* Accuracy Feedback */}
         <div className="text-center space-y-2">
+          <div className="text-4xl mb-2">
+            {reaction.emoji}
+          </div>
+          
+          <p className="text-xl font-semibold text-muted-foreground mb-3">
+            {reaction.message}
+          </p>
+          
           <div className="flex items-center justify-center gap-2">
             {difference > 0 ? (
               <TrendingUp className="w-5 h-5 text-orange-500" />
             ) : difference < 0 ? (
               <TrendingDown className="w-5 h-5 text-green-500" />
-            ) : (
-              <span className="text-2xl">🎯</span>
-            )}
+            ) : null}
             <p className="text-lg">
               You were{' '}
               <span className={cn('font-bold', accuracy.color)}>
@@ -79,10 +96,6 @@ export function RevealCard({
               {difference > 0 ? 'under' : difference < 0 ? 'over' : 'exactly right!'}
             </p>
           </div>
-          
-          <p className={cn('text-2xl font-bold', accuracy.color)}>
-            {accuracy.description}
-          </p>
           
           <p className="text-sm text-muted-foreground">
             {percentOff.toFixed(1)}% off from actual

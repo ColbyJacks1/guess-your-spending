@@ -29,6 +29,18 @@ export function RevealCard({
     return () => clearTimeout(timer);
   }, []);
 
+  // Handle Enter key to advance
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        onNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [onNext]);
+
   const difference = actual - guess;
   const percentOff = calculatePercentageDifference(guess, actual);
   const accuracy = getAccuracyRating(percentOff);

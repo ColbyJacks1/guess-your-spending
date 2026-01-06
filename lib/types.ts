@@ -1,3 +1,14 @@
+// Generic transaction interface for any financial CSV
+export interface Transaction {
+  date: string;           // Required: any date format
+  description: string;    // Required: payee/merchant/description
+  amount: number;         // Required: spending amount (positive)
+  category?: string;      // Optional: for category mode
+  account?: string;       // Optional: account name
+  memo?: string;          // Optional: notes
+}
+
+// Legacy YNAB-specific transaction interface (kept for backward compatibility)
 export interface YNABTransaction {
   account: string;
   flag: string;

@@ -1,4 +1,4 @@
-import { YNABTransaction, SpendingCategory } from './types';
+import { Transaction, SpendingCategory } from './types';
 import { DateRange, filterTransactionsByDate } from './utils';
 
 export interface AggregationOptions {
@@ -13,7 +13,7 @@ export interface AggregationOptions {
  * Aggregate transactions by retailer or category
  */
 export function aggregateTransactions(
-  transactions: YNABTransaction[],
+  transactions: Transaction[],
   options: AggregationOptions
 ): SpendingCategory[] {
   const { mode, topN = 10, minAmount = 0, dateRange, excludeNames = [] } = options;
@@ -27,7 +27,7 @@ export function aggregateTransactions(
   const grouped = new Map<string, { total: number; count: number }>();
 
   filteredTransactions.forEach((transaction) => {
-    const key = mode === 'retailer' ? transaction.payee : transaction.category;
+    const key = mode === 'retailer' ? transaction.description : transaction.category;
 
     // Skip empty categories (for category mode)
     if (!key || key.trim() === '') {
@@ -41,7 +41,7 @@ export function aggregateTransactions(
 
     const existing = grouped.get(key) || { total: 0, count: 0 };
     grouped.set(key, {
-      total: existing.total + transaction.outflow,
+      total: existing.total + transaction.amount,
       count: existing.count + 1,
     });
   });
@@ -64,14 +64,14 @@ export function aggregateTransactions(
 /**
  * Get total spending from transactions
  */
-export function getTotalSpending(transactions: YNABTransaction[]): number {
-  return transactions.reduce((sum, transaction) => sum + transaction.outflow, 0);
+export function getTotalSpending(transactions: Transaction[]): number {
+  return transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
 }
 
 /**
  * Get date range from transactions
  */
-export function getDateRange(transactions: YNABTransaction[]): {
+export function getDateRange(transactions: Transaction[]): {
   start: string;
   end: string;
 } {

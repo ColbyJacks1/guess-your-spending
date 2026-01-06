@@ -92,9 +92,9 @@ export function FileUpload({ onFileSelect, disabled = false }: FileUploadProps) 
         ) : (
           <>
             <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">Upload Your YNAB Export</h3>
+            <h3 className="text-lg font-semibold mb-2">Upload Your Transactions</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Drag and drop your Register.csv file here, or click to browse
+              Drag and drop your transaction CSV file here, or click to browse
             </p>
             <input
               type="file"

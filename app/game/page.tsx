@@ -7,7 +7,7 @@ import { DateRangeSelector } from '@/components/DateRangeSelector';
 import { GuessCard } from '@/components/GuessCard';
 import { RevealCard } from '@/components/RevealCard';
 import { Button } from '@/components/ui/button';
-import { YNABTransaction, SpendingCategory, GameResult } from '@/lib/types';
+import { Transaction, SpendingCategory, GameResult } from '@/lib/types';
 import { aggregateTransactions } from '@/lib/aggregator';
 import { DateRange, DateRangePreset, filterTransactionsByDate } from '@/lib/utils';
 import { ArrowLeft, Trophy, Play } from 'lucide-react';
@@ -17,7 +17,7 @@ type GameStage = 'mode-selection' | 'guessing' | 'revealing' | 'round-complete';
 
 export default function GamePage() {
   const router = useRouter();
-  const [transactions, setTransactions] = useState<YNABTransaction[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [mode, setMode] = useState<'retailer' | 'category'>('retailer');
   const [stage, setStage] = useState<GameStage>('mode-selection');
   const [categories, setCategories] = useState<SpendingCategory[]>([]);
@@ -32,7 +32,7 @@ export default function GamePage() {
 
   // Load transactions from sessionStorage
   useEffect(() => {
-    const stored = sessionStorage.getItem('ynab-transactions');
+    const stored = sessionStorage.getItem('transactions');
     if (!stored) {
       router.push('/');
       return;
@@ -70,7 +70,7 @@ export default function GamePage() {
       const filtered = filterTransactionsByDate(transactions, newDateRange);
       setFilteredTransactionCount(filtered.length);
       
-      const total = filtered.reduce((sum, t) => sum + t.outflow, 0);
+      const total = filtered.reduce((sum, t) => sum + t.amount, 0);
       setTotalSpent(total);
     }
   };
@@ -81,7 +81,7 @@ export default function GamePage() {
       const filtered = filterTransactionsByDate(transactions, dateRange);
       setFilteredTransactionCount(filtered.length);
       
-      const total = filtered.reduce((sum, t) => sum + t.outflow, 0);
+      const total = filtered.reduce((sum, t) => sum + t.amount, 0);
       setTotalSpent(total);
     }
   }, [transactions, dateRange]);
@@ -256,7 +256,7 @@ export default function GamePage() {
                 <p className="text-lg text-muted-foreground mt-2">
                   {results.length >= 30 ? "You're unstoppable! 🔥" : 
                    results.length >= 20 ? "On a roll! 🎲" :
-                   results.length >= 10 ? "Getting warmer! 🌡️" :
+                   results.length >= 10 ? "Nice work! 🎯" :
                    "Great start! 🚀"}
                 </p>
               </CardHeader>

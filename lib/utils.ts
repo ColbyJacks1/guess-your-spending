@@ -84,7 +84,10 @@ export function getAccuracyRating(percentOff: number): {
 export function calculateOverallScore(results: Array<{ percentOff: number }>): number {
   if (results.length === 0) return 0;
   
-  const avgPercentOff = results.reduce((sum, r) => sum + r.percentOff, 0) / results.length;
+  // Cap individual errors at 100% to make scoring more forgiving
+  // Being 200% off isn't much worse than being 100% off for scoring purposes
+  const cappedResults = results.map(r => Math.min(r.percentOff, 100));
+  const avgPercentOff = cappedResults.reduce((sum, r) => sum + r, 0) / cappedResults.length;
   
   // Convert to a 0-100 score (lower percent off = higher score)
   // 0% off = 100 score, 100% off = 0 score

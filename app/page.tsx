@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileUpload } from '@/components/FileUpload';
 import { ExportGuideTooltip, ExportGuideAccordion } from '@/components/ExportGuide';
-import { parseYNABCSV } from '@/lib/csv-parser';
+import { parseTransactionCSV } from '@/lib/csv-parser';
 import { Loader2 } from 'lucide-react';
 
 export default function Home() {
@@ -17,7 +17,7 @@ export default function Home() {
     setError(null);
 
     try {
-      const result = await parseYNABCSV(file);
+      const result = await parseTransactionCSV(file);
 
       if (!result.success) {
         setError(result.error || 'Failed to parse CSV file');
@@ -32,7 +32,7 @@ export default function Home() {
       }
 
       // Store transactions in sessionStorage for the game page
-      sessionStorage.setItem('ynab-transactions', JSON.stringify(result.transactions));
+      sessionStorage.setItem('transactions', JSON.stringify(result.transactions));
 
       // Navigate to game page
       router.push('/game');
@@ -98,9 +98,9 @@ export default function Home() {
                     1
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1">Upload Your YNAB Data</h3>
+                    <h3 className="font-semibold mb-1">Upload Your Transaction Data</h3>
                     <p className="text-sm text-muted-foreground">
-                      Export your budget from YNAB and upload the Register.csv file
+                      Upload a CSV from YNAB, Mint, your bank, or use our template
                     </p>
                   </div>
                 </div>

@@ -40,7 +40,7 @@ export default function ResultsPage() {
   const handlePlayAgain = () => {
     // Clear session storage
     sessionStorage.removeItem('game-results');
-    sessionStorage.removeItem('ynab-transactions');
+    sessionStorage.removeItem('transactions');
     router.push('/');
   };
 
